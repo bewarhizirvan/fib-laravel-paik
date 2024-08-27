@@ -2,8 +2,9 @@
 
 namespace FirstIraqiBank\FIBPaymentSDK\Services;
 
-use App\Models\FibPayment;
-use App\Services\Contracts\FIBPaymentRepositoryInterface;
+
+use FirstIraqiBank\FIBPaymentSDK\Model\FibPayment;
+use FirstIraqiBank\FIBPaymentSDK\Services\Contracts\FIBPaymentRepositoryInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -60,7 +61,7 @@ class FIBPaymentRepositoryService implements FIBPaymentRepositoryInterface
         return $this->getPaymentById($paymentId)->purchase()->first();
     }
 
-    public function updateOrCreateRefund(string $paymentId, array $refundData)
+    public function updateOrCreateRefund(string $paymentId, array $refundData): void
     {
         $fibPayment =  $this->getPaymentByFibId($paymentId);
         $fibPayment->refund()->updateOrCreate(['payment_id'=>$fibPayment->id], $refundData);

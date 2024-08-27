@@ -1,11 +1,12 @@
 <?php
     namespace FirstIraqiBank\FIBPaymentSDK;
 
-    use App\Services\Contracts\FIBPaymentIntegrationServiceInterface;
-    use App\Services\Contracts\FIBPaymentRepositoryInterface;
-    use App\Services\FIBAuthIntegrationService;
-    use App\Services\FIBPaymentIntegrationService;
-    use App\Services\FIBPaymentRepositoryService;
+    use FirstIraqiBank\FIBPaymentSDK\Services\Contracts\FIBPaymentIntegrationServiceInterface;
+    use FirstIraqiBank\FIBPaymentSDK\Services\Contracts\FIBPaymentRepositoryInterface;
+    use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
+    use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
+    use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentRepositoryService;
+
     use Illuminate\Support\ServiceProvider;
 
     class FIBPaymentServiceProvider extends ServiceProvider
@@ -38,6 +39,6 @@
             $this->loadRoutesFrom(__DIR__ . "/routes/api.php");
             $this->loadMigrationsFrom(__DIR__ . "/database/migrations");
             $this->mergeConfigFrom(__DIR__ . '/config/fib.php', 'fib');
-            $this->publishes([__DIR__ . '/config/fib.php' => config_path('fib.php')]);
+            $this->publishes([__DIR__ . '/config/fib.php' => config_path('fib.php'),], 'fib-payment-sdk-config');
         }
     }
