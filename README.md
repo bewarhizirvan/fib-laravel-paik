@@ -1,88 +1,267 @@
-# FIB Payment SDK
+# FIB Laravel Payment SDK
 
-The FIB Payment SDK provides seamless integration with the FIB payment system, empowering developers to streamline payment transactions and facilitate secure refunds within their applications.
+The FIB Laravel Payment SDK provides a seamless integration with the FIB payment system for Laravel applications, enabling secure and efficient payment transactions and refund handling.
+
+**Table of Contents**
+- [Features](#features)
+- [Installation](#installation)
+    - [Composer Installation](#composer-installation)
+    - [Alternative Installation (Without Composer)](#alternative-installation-without-composer)
+- [Configuration](#configuration)
+- [Usage](#usage)
+    - [Creating a Payment](#creating-a-payment)
+    - [Checking Payment Status](#checking-payment-status)
+    - [Refunding a Payment](#refunding-a-payment)
+    - [Cancelling a Payment](#cancelling-a-payment)
+    - [Handling Payment Callbacks](#handling-payment-callbacks)
+- [FIB Payment Documentation](#fib-payment-documentation)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+- [Acknowledgments](#acknowledgments)
+- [Versioning](#versioning)
+- [FAQ](#faq)
 
 ## Features
 
-- **Payment Transactions**: Enable users to make payments securely through the FIB payment system, handling transactions effortlessly within your application.
-
-- **Refund Processing**: Process refunds securely through the FIB payment system, managing transactions efficiently within your application.
+- **Payment Transactions**: Facilitate secure payments through the FIB payment system directly in your Laravel application.
+- **Refund Processing**: Manage refunds through the FIB payment system with ease.
+- **Payment Status Checking**: Retrieve the status of payments to ensure proper transaction tracking.
+- **Payment Cancellation**: Cancel payments as needed through the FIB payment system.
 
 ## Installation
 
-To integrate the SDK into your project, install it via Composer:
+To integrate the SDK into your Laravel project, install it via Composer:
 
 ```bash
-composer require First-Iraqi-Bank/fib-php-payment-sdk
+composer require First-Iraqi-Bank/fib-laravel-payment-sdk
 ```
 
+### Alternative Installation (Without Composer)
+If you prefer not to use Composer, follow these steps:
+
+- **Clone the Repository**: Clone the FIB Payment SDK repository:
+
+  ```bash
+  git clone https://github.com/First-Iraqi-Bank/fib-laravel-payment-sdk.git
+  ```
+
+- **Include in Your Project**: Move or copy the cloned `fib-laravel-payment-sdk` directory into your Laravel project.
+
+- **Autoloading**: Ensure that the `src` directory of the SDK is included in your `composer.json` autoloader configuration if not using Composer:
+
+  ```json
+  {
+      "autoload": {
+          "psr-4": {
+              "FirstIraqiBank\\FIBPaymentSDK\\": "path/to/fib-laravel-payment-sdk/src"
+          }
+      }
+  }
+  ```
+
+- **Usage**: After including the SDK, use its classes and functionality in your Laravel application.
 
 ### Configuration
-To configure the SDK, you need to set the following environment variables:
 
-  - `FIB_API_KEY`: Your FIB payment API key.
-  - `FIB_API_SECRET`: Your FIB payment API secret.
-  - `FIB_BASE_URL`: The base URL for the FIB payment API (default: https://api.fibpayment.com).
-  - `FIB_GRANT_TYPE`: The grant type for authentication with the FIB payment API (default: client_credentials).
-  - `FIB_REFUNDABLE_FOR`: The period for which transactions can be refunded (default: P7D, which stands for 7 days).
-  - `FIB_CURRENCY`: The currency used for transactions with the FIB payment system (default: IQD).
-  - `FIB_CALLBACK_URL`: The callback URL for handling payment notifications from the FIB payment system.
-  - `FIB_ACCOUNT`: The FIB payment account identifier.
+Add the following environment variables to your `.env` file:
 
-Make sure to set these environment variables appropriately in your application's environment configuration.
+- `FIB_API_KEY`: Your FIB payment API key.
+- `FIB_API_SECRET`: Your FIB payment API secret.
+- `FIB_BASE_URL`: The base URL for the FIB payment API (default: https://api.fibpayment.com).
+- `FIB_GRANT_TYPE`: The grant type for authentication (default: client_credentials).
+- `FIB_REFUNDABLE_FOR`: The period for which transactions can be refunded (default: P7D).
+- `FIB_CURRENCY`: The currency used for transactions (default: IQD).
+- `FIB_CALLBACK_URL`: The callback URL for payment notifications.
+- `FIB_ACCOUNT`: The FIB payment account identifier.
 
-### Publishing Configuration File
-To customize the FIB Payment SDK configuration according to your application's requirements, you can publish the configuration file to your Laravel project. Follow the steps below to publish the configuration file:
+### Usage of the SDK
 
-Run the Command:
-
-Open your terminal and navigate to your Laravel project's directory. Then, run the following Artisan command:
+#### Ensure Dependencies are Installed:
+Install required dependencies using Composer:
 
 ```bash
-  php artisan vendor:publish --tag=fib-payment-sdk-config
+composer install
 ```
 
-This command will publish the configuration file to your Laravel project.
+#### Set Up Environment Variables:
+Create a `.env` file in the root directory of your Laravel project and set the necessary environment variables.
 
-#### Locate the Configuration File:
+#### Creating a Payment
 
-After running the command, you can find the published configuration file in the config directory of your Laravel project.
+Here's an example of how to create a payment:
 
-#### Customize Configuration:
+```php
+<?php
 
-Open the published configuration file (config/fib.php) in your preferred text editor.
-You can modify the configuration options according to your needs.
-Ensure that you set the necessary environment variables in your .env file
-or provide default values directly in the configuration file.
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-### Documentation
-For more information on how to use the SDK, refer to the full documentation.
+// Initialize the authentication service
+$authService = new FIBAuthIntegrationService();
 
-Testing
-To ensure the SDK functions correctly, run tests using PHPUnit:
+// Initialize the payment integration service
+$paymentService = new FIBPaymentIntegrationService($authService);
+
+try {
+    // Create a new payment
+    $paymentResponse = $paymentService->createPayment(1000, 'http://localhost/callback', 'Test payment description');
+    $paymentData = json_decode($paymentResponse->getBody(), true);
+    
+    // Return the payment ID
+    return $paymentData['paymentId'];
+} catch (Exception $e) {
+    throw new Exception("Error creating payment: " . $e->getMessage());
+}
+```
+
+#### Checking the Payment Status
+
+To check the status of a payment:
+
+```php
+<?php
+
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
+
+// Initialize the authentication service
+$authService = new FIBAuthIntegrationService();
+
+// Initialize the payment integration service
+$paymentService = new FIBPaymentIntegrationService($authService);
+
+try {
+    $paymentId = 'your_payment_id'; // Retrieve from your storage
+    $response = $paymentService->checkPaymentStatus($paymentId);
+    echo "Payment Status: " . $response['status'] ?? null;
+} catch (Exception $e) {
+    echo "Error checking payment status: " . $e->getMessage();
+}
+```
+
+#### Refunding a Payment
+
+To process a refund:
+
+```php
+<?php
+
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
+
+// Initialize the authentication service
+$authService = new FIBAuthIntegrationService();
+
+// Initialize the payment integration service
+$paymentService = new FIBPaymentIntegrationService($authService);
+
+try {
+    $paymentId = 'your_payment_id'; // Retrieve from your storage
+    $response = $paymentService->refund($paymentId);
+    echo "Refund Payment Status: " . $response['status_code'];
+} catch (Exception $e) {
+    echo "Error Refunding payment: " . $e->getMessage();
+}
+```
+
+#### Cancelling a Payment
+
+To cancel a payment:
+
+```php
+<?php
+
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
+use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
+
+// Initialize the authentication service
+$authService = new FIBAuthIntegrationService();
+
+// Initialize the payment integration service
+$paymentService = new FIBPaymentIntegrationService($authService);
+
+try {
+    $paymentId = 'your_payment_id'; // Retrieve from your storage
+    $response = $paymentService->cancel($paymentId);
+    if (in_array($response->getStatusCode(), [200, 201, 202, 204])) {
+        echo "Cancel Payment Status: Successful";
+    } else {
+        echo "Cancel Payment Status: Failed with status code " . $response->getStatusCode();
+    }
+} catch (Exception $e) {
+    echo "Error Cancelling payment: " . $e->getMessage();
+}
+```
+
+#### Handling Payment Callbacks
+
+To handle payment callbacks, create a route and controller method:
+
+```php
+// web.php or api.php
+Route::post('/callback', [PaymentController::class, 'handleCallback']);
+
+// PaymentController.php
+public function handleCallback(Request $request)
+{
+    $payload = $request->all();
+
+    $paymentId = $payload['id'] ?? null;
+    $status = $payload['status'] ?? null;
+
+    if (!$paymentId || !$status) {
+        return response()->json(['error' => 'Invalid callback payload'], 400);
+    }
+
+    try {
+        // Implement your callback handling logic
+        return response()->json(['message' => 'Callback processed successfully']);
+    } catch (Exception $e) {
+        return response()->json(['error' => 'Failed to process callback: ' . $e->getMessage()], 500);
+    }
+}
+```
+
+### FIB Payment Documentation
+
+For detailed documentation on FIB Online Payment, refer to the [full documentation](https://documenter.getpostman.com/view/18377702/UVCB93tc).
+
+### Testing
+
+Run tests using PHPUnit:
+
 ```bash
-  phpunit
+vendor/bin/phpunit --testdox
 ```
 
 ### Contributing
-Contributions are welcome! Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests.
+
+Contributions are welcome! Please read `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
 
 ### License
-This project is licensed under the MIT License - see the LICENSE.md file for details.
+
+This project is licensed under the MIT License. See the [LICENSE.md](LICENSE.md) file for details.
 
 ### Support
+
 For support, please contact support@fib-payment.com or visit our website.
 
 ### Acknowledgments
-Thanks to the FIB Payment development team for their contributions.
-This SDK uses the Guzzle HTTP client library for API requests.
+
+Thanks to the FIB Payment development team for their contributions. This SDK uses the cURL library for API requests.
 
 ### Versioning
-We use SemVer for versioning. For the versions available, see the tags on this repository.
+
+We use semantic versioning (SemVer) principles. For available versions, see the tags on this repository.
 
 ### FAQ
-#### Q: How do I obtain an API key for the FIB Payment system?
-A: Please contact our support team at support@fib-payment.com to request an API key.
 
-#### Q: Can I use this SDK in a production environment?
-A: Yes, the SDK is designed for use in production environments, but please ensure you have configured it correctly and have obtained the necessary credentials.
+**Q: How do I get an API key for the FIB Payment system?**
+
+A: Contact our support team at support@fib-payment.com to request an API key.
+
+**Q: Can I use this SDK in a production environment?**
+
+A: Yes, the SDK is designed for production, but ensure it is configured correctly and you have the necessary credentials.
