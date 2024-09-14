@@ -5,7 +5,6 @@
     use Exception;
     use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
     use Illuminate\Support\Facades\Http;
-    use Illuminate\Support\Facades\Log;
     use Orchestra\Testbench\TestCase;
 
     class FIBAuthIntegrationServiceTest extends TestCase
@@ -44,12 +43,6 @@
                 'https://api.fib.com/login' => Http::response('Error message', 400),
             ]);
 
-            Log::shouldReceive('error')
-                ->once()
-                ->with('Failed to retrieve access token from FIB Payment API.', [
-                    'response' => 'Error message',
-                ]);
-
             $this->expectException(Exception::class);
             $this->expectExceptionMessage('Failed to retrieve access token.');
 
@@ -65,11 +58,6 @@
 //                throw new Exception('Network Error');
 //            });
 //
-//            Log::shouldReceive('error')
-//                ->once()
-//                ->with('Error occurred while retrieving access token from FIB Payment API.', Mockery::on(function ($data) {
-//                    return $data['message'] === 'Network Error';
-//                }));
 //
 //            $this->expectException(Exception::class);
 //            $this->expectExceptionMessage('Network Error');

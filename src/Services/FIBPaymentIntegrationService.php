@@ -6,10 +6,7 @@
     use FirstIraqiBank\FIBPaymentSDK\Model\FibPayment;
     use FirstIraqiBank\FIBPaymentSDK\Model\FibRefund;
     use FirstIraqiBank\FIBPaymentSDK\Services\Contracts\FIBPaymentIntegrationServiceInterface;
-    use Illuminate\Database\Eloquent\Builder;
-    use Illuminate\Database\Eloquent\Model;
     use Illuminate\Support\Facades\Http;
-    use Illuminate\Support\Facades\Log;
 
     class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterface
     {
@@ -36,6 +33,7 @@
         private function postRequest($url, array $data)
         {
             $token = $this->fibAuthIntegrationService->getToken();
+
             $response = retry(3, function () use ($url, $data, $token) {
                 return Http::withOptions([
                     'verify' => false, // Disable SSL verification
@@ -45,12 +43,8 @@
             }, 100);
 
             if (!$response->successful()) {
-                Log::error('Failed to post request to FIB Payment API.', [
-                    'url' => $url,
-                    'data' => $data,
-                    'response' => $response->body(),
-                ]);
                 throw new Exception('Failed to post request.');
+
             }
             return $response;
         }
@@ -69,11 +63,7 @@
             }, 100);
 
             if (!$response->successful()) {
-                Log::error('Failed to get request from FIB Payment API.', [
-                    'url' => $url,
-                    'response' => $response->body(),
-                ]);
-                throw new Exception('Failed to get request.');
+                throw new Exception('Failed to post request.');
             }
 
             return $response->json();
@@ -117,6 +107,9 @@
             ];
         }
 
+        /**
+         * @throws Exception
+         */
         public function refund($paymentId)
         {
             $response = $this->postRequest("{$this->baseUrl}/payments/{$paymentId}/refund", []);

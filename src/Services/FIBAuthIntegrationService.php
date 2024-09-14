@@ -4,7 +4,6 @@
 
     use Exception;
     use Illuminate\Support\Facades\Http;
-    use Illuminate\Support\Facades\Log;
 
     class FIBAuthIntegrationService
     {
@@ -45,17 +44,9 @@
                     return $response->json()['access_token'];
                 }
 
-                Log::error('Failed to retrieve access token from FIB Payment API.', [
-                    'response' => $response->body(),
-                ]);
 
                 throw new Exception('Failed to retrieve access token.');
             } catch (Exception $e) {
-
-                Log::error('Error occurred while retrieving access token from FIB Payment API.', [
-                    'message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
 
                 throw $e;
             }
