@@ -65,6 +65,13 @@ If you prefer not to use Composer, follow these steps:
 
 ### Configuration
 
+To customize the settings for the FIB Laravel Payment SDK, you need to publish the configuration file:
+
+```bash
+php artisan vendor:publish --tag=fib-payment-sdk-config
+```
+
+
 Add the following environment variables to your `.env` file:
 
 - `FIB_API_KEY`: Your FIB payment API key.
