@@ -7,7 +7,7 @@ The FIB Laravel Payment SDK provides a seamless integration with the FIB payment
 - [Installation](#installation)
     - [Composer Installation](#composer-installation)
     - [Alternative Installation (Without Composer)](#alternative-installation-without-composer)
-- [Configuration](#configuration)
+- [Registering the Service Provider and Running Migrations](#Registering-the-Service-Provider-and-Running-Migrations)
 - [Usage](#usage)
     - [Creating a Payment](#creating-a-payment)
     - [Checking Payment Status](#checking-payment-status)
@@ -61,15 +61,45 @@ If you prefer not to use Composer, follow these steps:
   }
   ```
 
+
+
+
 - **Usage**: After including the SDK, use its classes and functionality in your Laravel application.
 
-### Configuration
 
-To customize the settings for the FIB Laravel Payment SDK, you need to publish the configuration file:
+## Registering the Service Provider and Running Migrations
 
-```bash
+### Step 1: Register the Service Provider
+Before using the SDK, ensure that you register the `FIBPaymentServiceProvider`. This service provider binds the SDK's services into the Laravel service container and loads necessary resources like routes, migrations, and configurations.
+
+In your `config/app.php` file, add the following to the `providers` array:
+
+```php
+'providers' => [
+    // Other Service Providers...
+
+    FirstIraqiBank\FIBPaymentSDK\FIBPaymentServiceProvider::class,
+],
+```
+
+### Step 2: Publish the Configuration
+To customize the SDK's configuration, you need to publish the configuration file. Run the following Artisan command:
+
+```shell
 php artisan vendor:publish --tag=fib-payment-sdk-config
 ```
+
+This will publish the SDK configuration file to your application's `config/fib.php` file, where you can modify the SDK's behavior according to your needs.
+
+### Step 3: Running Migrations
+The SDK comes with migration files that create the necessary database tables. To run these migrations, use the following Artisan command:
+
+```shell
+php artisan migrate
+```
+
+This command will execute the migration files located in the SDK's `database/migrations` directory and create the required database tables.
+
 
 
 Add the following environment variables to your `.env` file:
