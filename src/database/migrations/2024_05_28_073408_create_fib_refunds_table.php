@@ -10,13 +10,13 @@
         {
             Schema::create('fib_refunds', function (Blueprint $table) {
                 $table->increments('id'); // Use increments for older Laravel versions
-                $table->unsignedBigInteger('payment_id');
                 $table->string('fib_trace_id')->nullable();
                 $table->string('status')->default('PENDING')->index();
                 $table->string('refund_details')->nullable();
                 $table->string('refund_failure_reason')->nullable();
                 $table->timestamps();
 
+                $table->unsignedInteger('payment_id');
                 $table->foreign('payment_id')
                     ->references('id')->on('fib_payments')
                     ->onDelete('cascade')
