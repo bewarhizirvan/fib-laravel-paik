@@ -132,24 +132,34 @@ Here's an example of how to create a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
-    // Create a new payment
-    $paymentResponse = $paymentService->createPayment(1000, 'http://localhost/callback', 'Test payment description');
-    $paymentData = json_decode($paymentResponse->getBody(), true);
-    
-    // Return the payment ID
-    return $paymentData['paymentId'];
+    // Call the createPayment method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->createPayment(1000, 'http://localhost/callback', 'Your payment description');
+
+    $paymentData = json_decode($response->getBody(), true);
+
+    // Return a response with the payment details and structure it as per your need.
+    if($response->successful()) {
+        return response()->json([
+            'message' => 'Payment created successfully!',
+            'payment' => $paymentData,
+        ]);
+    }
 } catch (Exception $e) {
-    throw new Exception("Error creating payment: " . $e->getMessage());
+    // Handle any errors that might occur.
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 
@@ -160,21 +170,39 @@ To check the status of a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->checkPaymentStatus($paymentId);
-    echo "Payment Status: " . $response['status'] ?? null;
+
+    // Call the checkPaymentStatus method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->checkPaymentStatus($paymentId);
+    $paymentData = json_decode($response->getBody(), true);
+
+    //return the status and structure it as per your need.
+    if($response->successful()) {
+        return response()->json([
+            'status' => $paymentData['status'],
+        ]);
+    } else{
+        return response()->json([
+            'data' => $paymentData,
+        ]);
+    }
+
 } catch (Exception $e) {
-    echo "Error checking payment status: " . $e->getMessage();
+    // Handle any errors that might occur
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 
@@ -185,19 +213,20 @@ To process a refund:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->refund($paymentId);
-    echo "Refund Payment Status: " . $response['status_code'];
+    $response = $this->paymentService->refund($paymentId);
+    echo "Refund Payment Status: " . $response;
 } catch (Exception $e) {
     echo "Error Refunding payment: " . $e->getMessage();
 }
@@ -210,25 +239,38 @@ To cancel a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->cancel($paymentId);
+
+    // Call the cancelPayment method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->cancelPayment($paymentId);
+
+    //return the response and structure it as per your need.
     if (in_array($response->getStatusCode(), [200, 201, 202, 204])) {
-        echo "Cancel Payment Status: Successful";
+        return response()->json([
+            'message' => "payment canceled Successfully",
+        ]);
     } else {
-        echo "Cancel Payment Status: Failed with status code " . $response->getStatusCode();
+        return response()->json([
+            'message' => "payment cancelation faild ",
+            'data' => $response->json()
+        ]);
     }
 } catch (Exception $e) {
-    echo "Error Cancelling payment: " . $e->getMessage();
+    // Handle any errors that might occur
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 

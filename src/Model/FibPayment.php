@@ -16,6 +16,7 @@ class FibPayment extends Model
     const PAID = 'PAID';
     const DECLINED = 'DECLINED';
     const REFUNDED = 'REFUNDED';
+    const CANCELED = 'CANCELED';
 
     protected $fillable = [
         'fib_payment_id',
