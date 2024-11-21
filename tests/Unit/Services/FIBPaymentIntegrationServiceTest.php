@@ -30,15 +30,9 @@
             $authServiceMock = Mockery::mock(FIBAuthIntegrationService::class);
             $authServiceMock->shouldReceive('getToken')->andReturn('test-token');
 
-            // Create a mock FibPayment object
-            $paymentMock = Mockery::mock(FibPayment::class);
-            $paymentMock->shouldReceive('getAttributes')->andReturn([
-                'payment_id' => '12345',
-                // Include other attributes that might be required for your test
-            ]);
-
             $paymentRepositoryMock = Mockery::mock(FIBPaymentRepositoryService::class);
-            $paymentRepositoryMock->shouldReceive('createPayment')->andReturn($paymentMock);
+            $paymentRepositoryMock->shouldReceive('createPayment')->once()->with(['payment_id' => '12345'], 1000)->andReturn(Mockery::mock(FibPayment::class));
+        
 
             $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
             $responseMock->shouldReceive('successful')->andReturn(true);
@@ -56,7 +50,11 @@
             $result = $service->createPayment(1000);
 
             // Assert
-            $this->assertInstanceOf(FibPayment::class, $result);
+            $this->assertInstanceOf('Illuminate\Http\Client\Response', $result);  // Assert that the result is an instance of Response
+            $this->assertTrue($result->successful());  // Assert that the response is successful
+            $this->assertEquals(['payment_id' => '12345'], $result->json());  // Assert that the JSON data matches
+            $paymentRepositoryMock->shouldHaveReceived('createPayment')->once()->with(['payment_id' => '12345'], 1000);
+
         }
 
         public function test_check_payment_status_success()
