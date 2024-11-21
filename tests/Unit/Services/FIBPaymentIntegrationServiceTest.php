@@ -64,24 +64,34 @@
             $authServiceMock->shouldReceive('getToken')->andReturn('test-token');
 
             $paymentRepositoryMock = Mockery::mock(FIBPaymentRepositoryService::class);
-            $paymentRepositoryMock->shouldReceive('updatePaymentStatus')->with('12345', 'COMPLETED');
+            $paymentRepositoryMock->shouldReceive('updatePaymentStatus')->with('b8f659db-b7aa-48cc-8a99-e04cc07d4b41', 'DECLINED');
 
             $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
             $responseMock->shouldReceive('successful')->andReturn(true);
-            $responseMock->shouldReceive('json')->andReturn(['status' => 'COMPLETED']);
-
+            $responseMock->shouldReceive('json')->andReturn([
+                'paymentId' => 'b8f659db-b7aa-48cc-8a99-e04cc07d4b41',
+                'status' => 'DECLINED',
+                'paidAt' => null,
+                'amount' => [
+                    'amount' => 200,
+                    'currency' => 'IQD',
+                ],
+                'decliningReason' => 'PAYMENT_EXPIRATION',
+                'declinedAt' => '2024-11-20T14:06:31Z',
+                'paidBy' => null,
+            ]);
             Http::shouldReceive('withoutVerifying')->andReturnSelf();
             Http::shouldReceive('withToken')->with('test-token')->andReturnSelf();
-            Http::shouldReceive('withOptions')->andReturnSelf(); // Add this line
+            Http::shouldReceive('withOptions')->andReturnSelf();
             Http::shouldReceive('get')->andReturn($responseMock);
 
             $service = new FIBPaymentIntegrationService($paymentRepositoryMock, $authServiceMock);
 
             // Act
-            $status = $service->checkPaymentStatus('12345');
+            $status = $service->checkPaymentStatus('b8f659db-b7aa-48cc-8a99-e04cc07d4b41');
 
             // Assert
-            $this->assertEquals('COMPLETED', $status['status']);
+            $this->assertEquals('DECLINED', $status); // Check if status is 'DECLINED'
         }
 
         public function test_refund_success()
