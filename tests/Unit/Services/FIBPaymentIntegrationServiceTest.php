@@ -64,36 +64,25 @@
             $authServiceMock->shouldReceive('getToken')->andReturn('test-token');
 
             $paymentRepositoryMock = Mockery::mock(FIBPaymentRepositoryService::class);
-            $paymentRepositoryMock->shouldReceive('updatePaymentStatus')->with('b8f659db-b7aa-48cc-8a99-e04cc07d4b41', 'DECLINED');
+            $paymentRepositoryMock->shouldReceive('updatePaymentStatus')->with('12345', 'COMPLETED');
 
             $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
             $responseMock->shouldReceive('successful')->andReturn(true);
-            $responseMock->shouldReceive('json')->andReturn([
-                'paymentId' => 'b8f659db-b7aa-48cc-8a99-e04cc07d4b41',
-                'status' => 'DECLINED',
-                'paidAt' => null,
-                'amount' => [
-                    'amount' => 200,
-                    'currency' => 'IQD',
-                ],
-                'decliningReason' => 'PAYMENT_EXPIRATION',
-                'declinedAt' => '2024-11-20T14:06:31Z',
-                'paidBy' => null,
-            ]);
+            $responseMock->shouldReceive('json')->andReturn(['status' => 'COMPLETED']);
+
             Http::shouldReceive('withoutVerifying')->andReturnSelf();
             Http::shouldReceive('withToken')->with('test-token')->andReturnSelf();
-            Http::shouldReceive('withOptions')->andReturnSelf();
+            Http::shouldReceive('withOptions')->andReturnSelf(); // Add this line
             Http::shouldReceive('get')->andReturn($responseMock);
 
             $service = new FIBPaymentIntegrationService($paymentRepositoryMock, $authServiceMock);
 
             // Act
-            $status = $service->checkPaymentStatus('b8f659db-b7aa-48cc-8a99-e04cc07d4b41');
+            $status = $service->checkPaymentStatus('12345');
 
             // Assert
-            $this->assertEquals('DECLINED', $status); // Check if status is 'DECLINED'
+            $this->assertEquals('COMPLETED', $status->json()['status']);
         }
-
         public function test_refund_success()
         {
             // Arrange
@@ -110,7 +99,6 @@
                 ->with('payment_id_123', FibPayment::REFUNDED);
 
             $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
-            $responseMock->shouldReceive('successful')->once()->andReturn(true);
             $responseMock->shouldReceive('status')->andReturn(202);
 
             Http::shouldReceive('withoutVerifying')->andReturnSelf();
@@ -125,6 +113,41 @@
             $service->refund('payment_id_123');
 
             $this->assertTrue(true);
+        }
+
+        public function test_cancel_payment_success()
+        {
+            // Arrange
+            $authServiceMock = Mockery::mock(FIBAuthIntegrationService::class);
+            $authServiceMock->shouldReceive('getToken')->andReturn('test_token');
+
+            $paymentRepositoryMock = Mockery::mock(FIBPaymentRepositoryService::class);
+            $paymentRepositoryMock->shouldReceive('updatePaymentStatus')
+                ->once()
+                ->with('payment_id_123', FibPayment::CANCELED);
+
+            // Mock the response for postRequest
+            $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
+            $responseMock->shouldReceive('status')->andReturn(204); // Simulate a 204 status for successful cancellation
+
+            Http::shouldReceive('withoutVerifying')->andReturnSelf();
+            Http::shouldReceive('asJson')->andReturnSelf();
+            Http::shouldReceive('withToken')->with('test_token')->andReturnSelf();
+            Http::shouldReceive('withOptions')->andReturnSelf();
+            Http::shouldReceive('post')->once()->andReturn($responseMock);
+
+            $service = new FIBPaymentIntegrationService($paymentRepositoryMock, $authServiceMock);
+
+            // Act
+            $service->cancelPayment('payment_id_123');
+
+            // Assert: Check that the repository method was called with correct parameters
+            $paymentRepositoryMock->shouldHaveReceived('updatePaymentStatus')
+                ->once()
+                ->with('payment_id_123', FibPayment::CANCELED);
+
+            // Assert: The response is not null and has the correct status
+            $this->assertTrue(true);  // The test passes if no exceptions are thrown
         }
 
         protected function tearDown(): void

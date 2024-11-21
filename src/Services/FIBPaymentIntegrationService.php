@@ -31,40 +31,29 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
     private function postRequest($url, array $data)
     {
         $token = $this->fibAuthIntegrationService->getToken();
-        $response = $this->makeApiRequest('post', $url, $data, $token);
-
+        $response = retry(3, function () use ($url, $data, $token) {
+            return Http::withOptions([
+                'verify' => false, // Disable SSL verification
+            ])->asJson()
+                ->withToken($token)
+                ->post($url, $data);
+        }, 100);
         return $response;
     }
 
     /**
      * @throws Exception
      */
-    private function getRequest($url)
+    protected function getRequest($url)
     {
         $token = $this->fibAuthIntegrationService->getToken();
-        $response = $this->makeApiRequest('get', $url, [], $token);
+        $response = retry(3, function () use ($url, $token) {
+            return Http::withOptions([
+                'verify' => false, // Disable SSL verification
+            ])->withToken($token)
+                ->get($url);
+        }, 100);
         return $response;
-    }
-
-    /**
-     * @param string $method
-     * @param string $url
-     * @param array $data
-     * @param string $token
-     * @return \Illuminate\Http\Client\Response
-     */
-    protected function makeApiRequest(string $method, string $url, array $data, string $token)
-    {
-        return retry(
-            3,
-            function () use ($method, $url, $data, $token) {
-                return Http::withOptions(['verify' => false])
-                    ->withToken($token)
-                    ->asJson()
-                    ->{$method}($url, $data);
-            },
-            100,
-        );
     }
 
     /**
@@ -100,7 +89,7 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
         try{
             $response = $this->getRequest("{$this->baseUrl}/payments/{$paymentId}/status");
             if($response->successful()) {
-                $this->fibPaymentRepository->updatePaymentStatus($paymentId, $response['status']);
+                $this->fibPaymentRepository->updatePaymentStatus($paymentId, $response->json()['status']);
             }
             return $response;
         } catch (Exception $e) {
