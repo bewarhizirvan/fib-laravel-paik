@@ -81,7 +81,7 @@
             $status = $service->checkPaymentStatus('12345');
 
             // Assert
-            $this->assertEquals('COMPLETED', $status);
+            $this->assertEquals('COMPLETED', $status['status']);
         }
 
         public function test_refund_success()
