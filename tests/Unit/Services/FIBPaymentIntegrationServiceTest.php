@@ -13,43 +13,44 @@
 
     class FIBPaymentIntegrationServiceTest extends TestCase
     {
+        protected $fibPaymentIntegrationService;
+        protected $fibPaymentRepositoryMock;
+        protected $fibAuthIntegrationServiceMock;
         protected function setUp(): void
         {
             parent::setUp();
 
             // Setup configuration
-            config()->set('fib.base_url', 'https://api.fib.com');
-            config()->set('fib.currency', 'USD');
-            config()->set('fib.callback', 'https://your-callback-url.com');
-            config()->set('fib.refundable_for', 30);
+            $this->fibPaymentRepositoryMock = $this->createMock(FIBPaymentRepositoryService::class);
+            $this->fibAuthIntegrationServiceMock = $this->createMock(FIBAuthIntegrationService::class);
+
+            $this->fibPaymentIntegrationService = new FIBPaymentIntegrationService(
+                $this->fibPaymentRepositoryMock,
+                $this->fibAuthIntegrationServiceMock
+            );
         }
 
         public function test_create_payment_success()
         {
-            // Arrange
-            $authServiceMock = Mockery::mock(FIBAuthIntegrationService::class);
-            $authServiceMock->shouldReceive('getToken')->andReturn('test-token');
+            $this->fibAuthIntegrationServiceMock->method('getToken')
+            ->willReturn('mocked_token');
 
-            $paymentRepositoryMock = Mockery::mock(FIBPaymentRepositoryService::class);
-            $paymentRepositoryMock->shouldReceive('createPayment')->andReturn(Mockery::mock(FibPayment::class));
+            // Mocking the HTTP response for payment creation
+            Http::fake([
+                '*/payments' => Http::response(['payment_id' => 123, 'status' => 'success'], 200),
+            ]);
 
-            $responseMock = Mockery::mock('Illuminate\Http\Client\Response');
-            $responseMock->shouldReceive('successful')->andReturn(true);
-            $responseMock->shouldReceive('json')->andReturn(['payment_id' => '12345']);
+            // Mocking the repository method for saving the payment
+            $this->fibPaymentRepositoryMock->expects($this->once())
+                ->method('createPayment')
+                ->with(['payment_id' => 123, 'status' => 'success'], 100);
 
-            Http::shouldReceive('withoutVerifying')->andReturnSelf();
-            Http::shouldReceive('asJson')->andReturnSelf();
-            Http::shouldReceive('withToken')->with('test-token')->andReturnSelf();
-            Http::shouldReceive('withOptions')->andReturnSelf(); // Add this line
-            Http::shouldReceive('post')->andReturn($responseMock);
+            // Running the service method
+            $response = $this->fibPaymentIntegrationService->createPayment(100);
 
-            $service = new FIBPaymentIntegrationService($paymentRepositoryMock, $authServiceMock);
-
-            // Act
-            $result = $service->createPayment(1000);
-
-            // Assert
-            $this->assertInstanceOf(FibPayment::class, $result);
+            // Asserting the response status and the payment creation
+            $this->assertTrue($response->successful());
+            $this->assertEquals(123, $response->json()['payment_id']);
         }
 
         public function test_check_payment_status_success()
