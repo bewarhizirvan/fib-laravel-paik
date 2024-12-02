@@ -72,7 +72,8 @@ If you prefer not to use Composer, follow these steps:
 ### Step 1: Register the Service Provider
 Before using the SDK, ensure that you register the `FIBPaymentServiceProvider`. This service provider binds the SDK's services into the Laravel service container and loads necessary resources like routes, migrations, and configurations.
 
-In your `config/app.php` file, add the following to the `providers` array:
+#### For Laravel 10 and Lower:
+In your config/app.php file, add the following to the providers array:
 
 ```php
 'providers' => [
@@ -80,6 +81,18 @@ In your `config/app.php` file, add the following to the `providers` array:
 
     FirstIraqiBank\FIBPaymentSDK\FIBPaymentServiceProvider::class,
 ],
+```
+
+#### For Laravel 11 and Higher:
+In Laravel 11, service providers are registered in the bootstrap/providers.php file. To register the FIBPaymentServiceProvider, add it to the returned array in the bootstrap/providers.php file like this:
+
+```<?php
+
+return [
+    // Other service providers...
+
+    FirstIraqiBank\FIBPaymentSDK\FIBPaymentServiceProvider::class,
+];
 ```
 
 ### Step 2: Publish the Configuration
@@ -132,24 +145,34 @@ Here's an example of how to create a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
-    // Create a new payment
-    $paymentResponse = $paymentService->createPayment(1000, 'http://localhost/callback', 'Test payment description');
-    $paymentData = json_decode($paymentResponse->getBody(), true);
-    
-    // Return the payment ID
-    return $paymentData['paymentId'];
+    // Call the createPayment method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->createPayment(1000, 'http://localhost/callback', 'Your payment description');
+
+    $paymentData = json_decode($response->getBody(), true);
+
+    // Return a response with the payment details and structure it as per your need.
+    if($response->successful()) {
+        return response()->json([
+            'message' => 'Payment created successfully!',
+            'payment' => $paymentData,
+        ]);
+    }
 } catch (Exception $e) {
-    throw new Exception("Error creating payment: " . $e->getMessage());
+    // Handle any errors that might occur.
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 
@@ -160,21 +183,39 @@ To check the status of a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->checkPaymentStatus($paymentId);
-    echo "Payment Status: " . $response['status'] ?? null;
+
+    // Call the checkPaymentStatus method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->checkPaymentStatus($paymentId);
+    $paymentData = json_decode($response->getBody(), true);
+
+    //return the status and structure it as per your need.
+    if($response->successful()) {
+        return response()->json([
+            'status' => $paymentData['status'],
+        ]);
+    } else{
+        return response()->json([
+            'data' => $paymentData,
+        ]);
+    }
+
 } catch (Exception $e) {
-    echo "Error checking payment status: " . $e->getMessage();
+    // Handle any errors that might occur
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 
@@ -185,19 +226,20 @@ To process a refund:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->refund($paymentId);
-    echo "Refund Payment Status: " . $response['status_code'];
+    $response = $this->paymentService->refund($paymentId);
+    echo "Refund Payment Status: " . $response;
 } catch (Exception $e) {
     echo "Error Refunding payment: " . $e->getMessage();
 }
@@ -210,25 +252,38 @@ To cancel a payment:
 ```php
 <?php
 
-use FirstIraqiBank\FIBPaymentSDK\Services\FIBAuthIntegrationService;
 use FirstIraqiBank\FIBPaymentSDK\Services\FIBPaymentIntegrationService;
 
-// Initialize the authentication service
-$authService = new FIBAuthIntegrationService();
+protected $paymentService;
 
-// Initialize the payment integration service
-$paymentService = new FIBPaymentIntegrationService($authService);
+// Inject the FIBPaymentIntegrationService in your controller's construct.
+public function __construct(FIBPaymentIntegrationService $paymentService)
+{
+    $this->paymentService = $paymentService;
+}
 
 try {
     $paymentId = 'your_payment_id'; // Retrieve from your storage
-    $response = $paymentService->cancel($paymentId);
+
+    // Call the cancelPayment method of the FIBPaymentIntegrationService
+    $response = $this->paymentService->cancelPayment($paymentId);
+
+    //return the response and structure it as per your need.
     if (in_array($response->getStatusCode(), [200, 201, 202, 204])) {
-        echo "Cancel Payment Status: Successful";
+        return response()->json([
+            'message' => "payment canceled Successfully",
+        ]);
     } else {
-        echo "Cancel Payment Status: Failed with status code " . $response->getStatusCode();
+        return response()->json([
+            'message' => "payment cancelation faild ",
+            'data' => $response->json()
+        ]);
     }
 } catch (Exception $e) {
-    echo "Error Cancelling payment: " . $e->getMessage();
+    // Handle any errors that might occur
+    return response()->json([
+        'message' => 'Error creating payment: ' . $e->getMessage()
+    ], 500);
 }
 ```
 
