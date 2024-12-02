@@ -72,7 +72,8 @@ If you prefer not to use Composer, follow these steps:
 ### Step 1: Register the Service Provider
 Before using the SDK, ensure that you register the `FIBPaymentServiceProvider`. This service provider binds the SDK's services into the Laravel service container and loads necessary resources like routes, migrations, and configurations.
 
-In your `config/app.php` file, add the following to the `providers` array:
+#### For Laravel 10 and Lower:
+In your config/app.php file, add the following to the providers array:
 
 ```php
 'providers' => [
@@ -80,6 +81,18 @@ In your `config/app.php` file, add the following to the `providers` array:
 
     FirstIraqiBank\FIBPaymentSDK\FIBPaymentServiceProvider::class,
 ],
+```
+
+#### For Laravel 11 and Higher:
+In Laravel 11, service providers are registered in the bootstrap/providers.php file. To register the FIBPaymentServiceProvider, add it to the returned array in the bootstrap/providers.php file like this:
+
+```<?php
+
+return [
+    // Other service providers...
+
+    FirstIraqiBank\FIBPaymentSDK\FIBPaymentServiceProvider::class,
+];
 ```
 
 ### Step 2: Publish the Configuration
