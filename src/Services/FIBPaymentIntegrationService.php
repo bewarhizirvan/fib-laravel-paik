@@ -59,10 +59,10 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
     /**
      * @throws Exception
      */
-    public function createPayment($amount, $callback = null, $description = null)
+    public function createPayment($amount, $callback = null, $description = null, $redirectUri = null)
     {
         try{
-            $data = $this->getPaymentData($amount, $callback, $description);
+            $data = $this->getPaymentData($amount, $callback, $description, $redirectUri);
             $paymentData = $this->postRequest("{$this->baseUrl}/payments", $data);
             if($paymentData->successful()) {
                 $this->fibPaymentRepository->createPayment($paymentData->json(), $amount);
@@ -109,7 +109,7 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
         $this->fibPaymentRepository->updatePaymentStatus($paymentId, $status);
     }
 
-    public function getPaymentData($amount, $callback = null, $description = null)
+    public function getPaymentData($amount, $callback = null, $description = null, $redirectUri = null)
     {
         return [
             'monetaryValue' => [
@@ -118,6 +118,7 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
             ],
             'statusCallbackUrl' => $callback ?? config('fib.callback'),
             'description' => $description ?? '',
+            'redirectUri' => $redirectUri ?? '',
             'refundableFor' => config('fib.refundable_for'),
         ];
     }
