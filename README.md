@@ -157,7 +157,7 @@ public function __construct(FIBPaymentIntegrationService $paymentService)
 
 try {
     // Call the createPayment method of the FIBPaymentIntegrationService
-    $response = $this->paymentService->createPayment(1000, 'http://localhost/callback', 'Your payment description');
+    $response = $this->paymentService->createPayment(1000, 'http://localhost/callback', 'Your payment description', 'http://localhost/redirectUri');
 
     $paymentData = json_decode($response->getBody(), true);
 
