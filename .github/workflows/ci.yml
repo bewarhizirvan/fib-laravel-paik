@@ -26,7 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          if [ "${{ matrix.php-version }}" == "7.4" ]; then
+          if [ "${{ matrix.php-version }}" == "7.4" ] || [ "${{ matrix.php-version }}" == "8.1" ]; then
             composer install --prefer-dist --no-progress --no-interaction --ignore-platform-reqs
           else
             composer install --prefer-dist --no-progress --no-interaction
