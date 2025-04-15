@@ -19,6 +19,7 @@ class FibPayment extends Model
     const CANCELED = 'CANCELED';
 
     protected $fillable = [
+        'cid',
         'fib_payment_id',
         'readable_code',
         'personal_app_link',
