@@ -14,7 +14,7 @@
                 $table->unsignedBigInteger('cid')->index();
                 $table->string('fib_payment_id')->unique();
                 $table->string('readable_code');
-                $table->string('personal_app_link');
+                $table->string('personal_app_link', 1000);
                 $table->string('status')->index()->default(FibPayment::UNPAID);
                 $table->integer('amount');
                 $table->dateTime('valid_until');
