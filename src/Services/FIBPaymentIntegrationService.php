@@ -59,13 +59,15 @@ class FIBPaymentIntegrationService implements FIBPaymentIntegrationServiceInterf
     /**
      * @throws Exception
      */
-    public function createPayment($amount, $callback = null, $description = null, $redirectUri = null)
+    public function createPayment($cid, $amount, $callback = null, $description = null, $redirectUri = null)
     {
         try{
             $data = $this->getPaymentData($amount, $callback, $description, $redirectUri);
             $paymentData = $this->postRequest("{$this->baseUrl}/payments", $data);
             if($paymentData->successful()) {
-                $this->fibPaymentRepository->createPayment($paymentData->json(), $amount);
+                $data = $paymentData->json();
+                $data["cid"] = $cid;
+                $this->fibPaymentRepository->createPayment($data, $amount);
             }
     
             return $paymentData;
