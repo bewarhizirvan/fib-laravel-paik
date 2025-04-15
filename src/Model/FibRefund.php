@@ -15,6 +15,7 @@
         const FAILED = 'FAILED';
 
         protected $fillable = [
+            'cid',
             'payment_id',
             'fib_trace_id',
             'status',
