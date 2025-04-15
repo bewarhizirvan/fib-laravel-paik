@@ -23,6 +23,7 @@ class FIBPaymentRepositoryService implements FIBPaymentRepositoryInterface
     public function createPayment(array $paymentData, int $amount)
     {
         return FibPayment::query()->create([
+            'cid' => $paymentData['cid'],
             'fib_payment_id' => $paymentData['paymentId'],
             'readable_code' => $paymentData['readableCode'],
             'personal_app_link' => $paymentData['personalAppLink'],
