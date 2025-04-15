@@ -10,6 +10,7 @@
         {
             Schema::create('fib_refunds', function (Blueprint $table) {
                 $table->increments('id'); // Use increments for older Laravel versions
+                $table->unsignedBigInteger('cid')->index();
                 $table->string('fib_trace_id')->nullable();
                 $table->string('status')->default('PENDING')->index();
                 $table->string('refund_details')->nullable();
