@@ -12,6 +12,7 @@
             Schema::create('fib_payments', function (Blueprint $table) {
                 $table->increments('id'); // Use increments for older Laravel versions
                 $table->unsignedBigInteger('cid')->index();
+                $table->boolean('renew_service')->default(false);
                 $table->string('fib_payment_id')->unique();
                 $table->string('readable_code');
                 $table->string('personal_app_link', 1000);
