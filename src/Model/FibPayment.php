@@ -20,6 +20,7 @@ class FibPayment extends Model
 
     protected $fillable = [
         'cid',
+        'renew_service',
         'fib_payment_id',
         'readable_code',
         'personal_app_link',
