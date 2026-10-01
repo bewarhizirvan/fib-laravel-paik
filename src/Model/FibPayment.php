@@ -29,6 +29,7 @@ class FibPayment extends Model
     ];
     protected $casts = [
         'valid_until' => 'datetime',
+        'renew_service' => 'boolean',
     ];
 
     public function refund(): HasOne
